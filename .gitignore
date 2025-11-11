@@ -79,3 +79,5 @@ agenthub/agents/youtube/db
 .cache/
 
 myenv/
+
+serviceAccountKey.json

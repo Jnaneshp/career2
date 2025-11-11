@@ -27,3 +27,5 @@ venv
 
 serviceAccountKey.json
 
+firebaseConfig.js
+

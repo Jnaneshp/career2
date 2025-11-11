@@ -113,11 +113,24 @@ export default function AIAssistantPage({ currentUser }) {
               <span className="text-xl font-bold text-gray-900">CareerConnect</span>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => navigate('/dashboard')} data-testid="nav-dashboard">Dashboard</Button>
-              <Button variant="ghost" onClick={() => navigate('/ai-assistant')} data-testid="nav-ai-assistant">AI Assistant</Button>
-              <Button variant="ghost" onClick={() => navigate('/mentorship')} data-testid="nav-mentorship">Mentorship</Button>
+              <Button variant="ghost" onClick={() => navigate('/dashboard')} data-testid="nav-dashboard">
+                Dashboard
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/ai-assistant')} data-testid="nav-ai-assistant">
+                AI Assistant
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/resume-assistant')} data-testid="nav-resume-assistant">
+                Resume Assistant
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/mentorship')} data-testid="nav-mentorship">
+                Mentorship
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/interview-prep')} data-testid="nav-interview-prep">
+                Interview Prep
+              </Button>
               <Button variant="outline" onClick={() => navigate('/profile')} data-testid="nav-profile">
-                <User className="w-4 h-4 mr-2" /> Profile
+                <User className="w-4 h-4 mr-2" />
+                Profile
               </Button>
             </div>
           </div>
