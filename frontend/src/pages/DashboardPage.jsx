@@ -92,6 +92,9 @@ export default function DashboardPage({ currentUser }) {
               <Button variant="ghost" onClick={() => navigate('/ai-assistant')} data-testid="nav-ai-assistant">
                 AI Assistant
               </Button>
+              <Button variant="ghost" onClick={() => navigate('/resume-assistant')} data-testid="nav-resume-assistant">
+                Resume Assistant
+              </Button>
               <Button variant="ghost" onClick={() => navigate('/mentorship')} data-testid="nav-mentorship">
                 Mentorship
               </Button>

@@ -14,6 +14,7 @@ import CodeEditorPage from '@/pages/CodeEditorPage';
 import { auth } from '@/firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import axios from 'axios';
+import ResumeAssistantPage from '@/pages/ResumeAssistantPage';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}`;
@@ -158,6 +159,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route 
+            path="/resume-assistant" 
+            element={
+              <ProtectedRoute>
+                <ResumeAssistantPage currentUser={currentUser} />
+              </ProtectedRoute>
+            } 
+          />
+
           <Route
             path="/mentorship"
             element={
