@@ -14,3 +14,4 @@ db = client[os.environ['DB_NAME']]
 
 # Export for use in routes
 __all__ = ['db', 'client']
+

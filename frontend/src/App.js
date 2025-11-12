@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import '@/App.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
+
+// ✅ Page Imports
 import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
 import OnboardingPage from '@/pages/OnboardingPage';
@@ -11,10 +13,13 @@ import MentorshipPage from '@/pages/MentorshipPage';
 import DashboardPage from '@/pages/DashboardPage';
 import InterviewPrepPage from '@/pages/InterviewPrepPage';
 import CodeEditorPage from '@/pages/CodeEditorPage';
-import { auth } from '@/firebaseConfig';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import axios from 'axios';
 import ResumeAssistantPage from '@/pages/ResumeAssistantPage';
+import ChatPage from '@/pages/ChatPage';
+import VideoCallPage from '@/pages/VideoCallPage'; // ✅ NEW IMPORT
+
+import { auth } from '@/firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
+import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}`;
@@ -105,7 +110,7 @@ function App() {
     <div className="App">
       <BrowserRouter>
         <Routes>
-          {/* Public Routes */}
+          {/* 🌐 Public Routes */}
           <Route
             path="/"
             element={
@@ -131,7 +136,7 @@ function App() {
             }
           />
 
-          {/* Protected Routes */}
+          {/* 🔒 Protected Routes */}
           <Route
             path="/dashboard"
             element={
@@ -159,16 +164,14 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          <Route 
-            path="/resume-assistant" 
+          <Route
+            path="/resume-assistant"
             element={
               <ProtectedRoute>
                 <ResumeAssistantPage currentUser={currentUser} />
               </ProtectedRoute>
-            } 
+            }
           />
-
           <Route
             path="/mentorship"
             element={
@@ -194,7 +197,27 @@ function App() {
             }
           />
 
-          {/* Catch-all */}
+          {/* 💬 Chat Route */}
+          <Route
+            path="/chat/:roomId"
+            element={
+              <ProtectedRoute>
+                <ChatPage currentUser={currentUser} />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 🎥 Video Call Route (NEW) */}
+          <Route
+            path="/video-call/:roomId"
+            element={
+              <ProtectedRoute>
+                <VideoCallPage currentUser={currentUser} />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 🧭 Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

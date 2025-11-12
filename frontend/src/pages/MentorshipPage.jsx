@@ -5,11 +5,32 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Users, User, Search, Star, Send, CheckCircle, XCircle, Clock } from 'lucide-react';
+import {
+  Users,
+  User,
+  Search,
+  Star,
+  Send,
+  CheckCircle,
+  XCircle,
+  Clock,
+  MessageCircle,
+} from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}`;
@@ -80,7 +101,7 @@ export default function MentorshipPage({ currentUser }) {
       await axios.post(`${API}/mentorship/request`, {
         mentor_id: selectedMentor.id,
         mentee_id: currentUser.id,
-        message: requestMessage
+        message: requestMessage,
       });
       toast.success('Mentorship request sent!');
       setIsDialogOpen(false);
@@ -98,7 +119,7 @@ export default function MentorshipPage({ currentUser }) {
     try {
       await axios.put(`${API}/mentorship/${requestId}/respond`, {
         request_id: requestId,
-        status
+        status,
       });
       toast.success(`Request ${status}!`);
       fetchMyRequests();
@@ -108,13 +129,20 @@ export default function MentorshipPage({ currentUser }) {
     }
   };
 
-  const filteredMentors = mentors.filter(mentor => {
+  const openChat = (mentorId, menteeId) => {
+    const roomId = `${mentorId}-${menteeId}`;
+    navigate(`/chat/${roomId}`);
+  };
+
+  const filteredMentors = mentors.filter((mentor) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
       mentor.name.toLowerCase().includes(query) ||
-      mentor.skills?.some(skill => skill.toLowerCase().includes(query)) ||
-      mentor.mentor_profile?.expertise?.some(exp => exp.toLowerCase().includes(query))
+      mentor.skills?.some((skill) => skill.toLowerCase().includes(query)) ||
+      mentor.mentor_profile?.expertise?.some((exp) =>
+        exp.toLowerCase().includes(query)
+      )
     );
   });
 
@@ -141,7 +169,9 @@ export default function MentorshipPage({ currentUser }) {
         </div>
       </div>
 
-      <p className="text-sm text-gray-700 mb-4 line-clamp-2">{mentor.bio || 'Experienced professional ready to guide you.'}</p>
+      <p className="text-sm text-gray-700 mb-4 line-clamp-2">
+        {mentor.bio || 'Experienced professional ready to guide you.'}
+      </p>
 
       <div className="space-y-3">
         {mentor.skills && mentor.skills.length > 0 && (
@@ -157,18 +187,19 @@ export default function MentorshipPage({ currentUser }) {
           </div>
         )}
 
-        {mentor.mentor_profile?.expertise && mentor.mentor_profile.expertise.length > 0 && (
-          <div>
-            <p className="text-xs font-medium text-gray-500 mb-1">Expertise</p>
-            <div className="flex flex-wrap gap-1">
-              {mentor.mentor_profile.expertise.slice(0, 4).map((exp, idx) => (
-                <Badge key={idx} variant="secondary" className="text-xs" data-testid={`expertise-${idx}`}>
-                  {exp}
-                </Badge>
-              ))}
+        {mentor.mentor_profile?.expertise &&
+          mentor.mentor_profile.expertise.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-gray-500 mb-1">Expertise</p>
+              <div className="flex flex-wrap gap-1">
+                {mentor.mentor_profile.expertise.slice(0, 4).map((exp, idx) => (
+                  <Badge key={idx} variant="secondary" className="text-xs" data-testid={`expertise-${idx}`}>
+                    {exp}
+                  </Badge>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
 
       {onRequestClick && (
@@ -241,7 +272,6 @@ export default function MentorshipPage({ currentUser }) {
 
             {/* Discover Mentors Tab */}
             <TabsContent value="discover" data-testid="discover-tab-content">
-              {/* Search */}
               <div className="mb-6">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -285,7 +315,9 @@ export default function MentorshipPage({ currentUser }) {
                   <Card className="p-12 text-center" data-testid="no-matches-card">
                     <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2 text-gray-900">No Matches Yet</h3>
-                    <p className="text-gray-600 mb-4">Complete your profile to get AI-powered mentor recommendations</p>
+                    <p className="text-gray-600 mb-4">
+                      Complete your profile to get AI-powered mentor recommendations
+                    </p>
                     <Button onClick={() => navigate('/profile')} data-testid="complete-profile-btn">
                       Complete Profile
                     </Button>
@@ -321,7 +353,9 @@ export default function MentorshipPage({ currentUser }) {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="text-lg font-semibold text-gray-900">
-                              {request.mentor_id === currentUser.id ? 'Request from Mentee' : 'Request to Mentor'}
+                              {request.mentor_id === currentUser.id
+                                ? 'Request from Mentee'
+                                : 'Request to Mentor'}
                             </h3>
                             <Badge
                               data-testid={`request-status-${index}`}
@@ -339,32 +373,49 @@ export default function MentorshipPage({ currentUser }) {
                           </div>
                           <p className="text-sm text-gray-600 mb-2">{request.message}</p>
                           {request.compatibility_score > 0 && (
-                            <p className="text-xs text-gray-500">Compatibility: {request.compatibility_score}%</p>
+                            <p className="text-xs text-gray-500">
+                              Compatibility: {request.compatibility_score}%
+                            </p>
                           )}
                         </div>
-                        
-                        {request.status === 'pending' && request.mentor_id === currentUser.id && (
-                          <div className="flex gap-2 ml-4">
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 ml-4">
+                          {request.status === 'pending' && request.mentor_id === currentUser.id && (
+                            <>
+                              <Button
+                                data-testid={`accept-request-btn-${index}`}
+                                onClick={() => handleRespondToRequest(request.id, 'accepted')}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Accept
+                              </Button>
+                              <Button
+                                data-testid={`reject-request-btn-${index}`}
+                                onClick={() => handleRespondToRequest(request.id, 'rejected')}
+                                size="sm"
+                                variant="destructive"
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+
+                          {/* Chat Button for Accepted Requests */}
+                          {request.status === 'accepted' && (
                             <Button
-                              data-testid={`accept-request-btn-${index}`}
-                              onClick={() => handleRespondToRequest(request.id, 'accepted')}
                               size="sm"
-                              className="bg-green-600 hover:bg-green-700"
+                              className="bg-blue-600 hover:bg-blue-700"
+                              onClick={() => openChat(request.mentor_id, request.mentee_id)}
                             >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Accept
+                              <MessageCircle className="w-4 h-4 mr-1" />
+                              Chat
                             </Button>
-                            <Button
-                              data-testid={`reject-request-btn-${index}`}
-                              onClick={() => handleRespondToRequest(request.id, 'rejected')}
-                              size="sm"
-                              variant="destructive"
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </Card>
                   ))}
@@ -379,11 +430,14 @@ export default function MentorshipPage({ currentUser }) {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent data-testid="request-dialog">
           <DialogHeader>
-            <DialogTitle>Request Mentorship from {selectedMentor?.name}</DialogTitle>
+            <DialogTitle>
+              Request Mentorship from {selectedMentor?.name}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <p className="text-sm text-gray-600">
-              Introduce yourself and explain why you'd like {selectedMentor?.name} as your mentor.
+              Introduce yourself and explain why you'd like{' '}
+              {selectedMentor?.name} as your mentor.
             </p>
             <Textarea
               data-testid="request-message-input"
@@ -394,7 +448,11 @@ export default function MentorshipPage({ currentUser }) {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} data-testid="cancel-request-btn">
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+              data-testid="cancel-request-btn"
+            >
               Cancel
             </Button>
             <Button
