@@ -101,6 +101,12 @@ export default function DashboardPage({ currentUser }) {
               <Button variant="ghost" onClick={() => navigate('/interview-prep')} data-testid="nav-interview-prep">
                 Interview Prep
               </Button>
+              <Button variant="ghost" onClick={() => navigate('/feed')} data-testid="nav-feed">
+  Feed
+</Button>
+              <Button variant="ghost" onClick={() => navigate('/jobs')} data-testid="nav-job-page">
+                Job Portal
+              </Button>
               <Button variant="outline" onClick={() => navigate('/profile')} data-testid="nav-profile">
                 <User className="w-4 h-4 mr-2" />
                 Profile

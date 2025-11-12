@@ -1,25 +1,26 @@
-import { useState, useEffect } from 'react';
-import '@/App.css';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from '@/components/ui/sonner';
+import { useState, useEffect } from "react";
+import "@/App.css";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "@/components/ui/sonner";
+import axios from "axios";
+import { auth } from "@/firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
 
 // ✅ Page Imports
-import HomePage from '@/pages/HomePage';
-import LoginPage from '@/pages/LoginPage';
-import OnboardingPage from '@/pages/OnboardingPage';
-import ProfilePage from '@/pages/ProfilePage';
-import AIAssistantPage from '@/pages/AIAssistantPage';
-import MentorshipPage from '@/pages/MentorshipPage';
-import DashboardPage from '@/pages/DashboardPage';
-import InterviewPrepPage from '@/pages/InterviewPrepPage';
-import CodeEditorPage from '@/pages/CodeEditorPage';
-import ResumeAssistantPage from '@/pages/ResumeAssistantPage';
-import ChatPage from '@/pages/ChatPage';
-import VideoCallPage from '@/pages/VideoCallPage'; // ✅ NEW IMPORT
-
-import { auth } from '@/firebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
-import axios from 'axios';
+import HomePage from "@/pages/HomePage";
+import LoginPage from "@/pages/LoginPage";
+import OnboardingPage from "@/pages/OnboardingPage";
+import ProfilePage from "@/pages/ProfilePage";
+import AIAssistantPage from "@/pages/AIAssistantPage";
+import MentorshipPage from "@/pages/MentorshipPage";
+import DashboardPage from "@/pages/DashboardPage";
+import InterviewPrepPage from "@/pages/InterviewPrepPage";
+import JobsPage from "@/pages/JobsPage";
+import CodeEditorPage from "@/pages/CodeEditorPage";
+import ResumeAssistantPage from "@/pages/ResumeAssistantPage";
+import ChatPage from "@/pages/ChatPage";
+import VideoCallPage from "@/pages/VideoCallPage";
+import FeedPage from "@/pages/FeedPage"; // 📰 NEW Feed page
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}`;
@@ -33,7 +34,7 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         if (user) {
-          console.log('✅ Firebase user detected:', user.email);
+          console.log("✅ Firebase user detected:", user.email);
 
           // Check if user exists in backend
           const res = await axios.get(`${API}/users`, {
@@ -43,23 +44,23 @@ function App() {
           if (res.data.length > 0) {
             const dbUser = res.data[0];
             setCurrentUser(dbUser);
-            localStorage.setItem('currentUser', JSON.stringify(dbUser));
+            localStorage.setItem("currentUser", JSON.stringify(dbUser));
           } else {
-            console.log('🆕 New Firebase user, needs onboarding');
+            console.log("🆕 New Firebase user, needs onboarding");
             setCurrentUser({
               firebase_uid: user.uid,
               email: user.email,
-              name: user.displayName || '',
+              name: user.displayName || "",
               onboarding_required: true,
             });
           }
         } else {
-          console.log('🚪 No Firebase user — logging out');
+          console.log("🚪 No Firebase user — logging out");
           setCurrentUser(null);
-          localStorage.removeItem('currentUser');
+          localStorage.removeItem("currentUser");
         }
       } catch (error) {
-        console.error('Error syncing user with backend:', error);
+        console.error("Error syncing user with backend:", error);
       } finally {
         setLoading(false);
       }
@@ -68,7 +69,7 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // ✅ Protected Route Component
+  // ✅ Protected Route Component (with localStorage fallback)
   const ProtectedRoute = ({ children }) => {
     if (loading) {
       return (
@@ -77,12 +78,12 @@ function App() {
         </div>
       );
     }
-    if (!currentUser) {
-      return <Navigate to="/login" replace />;
-    }
-    if (currentUser.onboarding_required) {
-      return <Navigate to="/onboarding" replace />;
-    }
+
+    const storedUser = localStorage.getItem("currentUser");
+    const finalUser = currentUser || (storedUser ? JSON.parse(storedUser) : null);
+
+    if (!finalUser) return <Navigate to="/login" replace />;
+    if (finalUser.onboarding_required) return <Navigate to="/onboarding" replace />;
     return children;
   };
 
@@ -106,6 +107,7 @@ function App() {
     );
   }
 
+  // ✅ App Routes
   return (
     <div className="App">
       <BrowserRouter>
@@ -197,6 +199,26 @@ function App() {
             }
           />
 
+          {/* 💼 Jobs Route */}
+          <Route
+            path="/jobs"
+            element={
+              <ProtectedRoute>
+                <JobsPage currentUser={currentUser} />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 📰 Feed Route (NEW) */}
+          <Route
+            path="/feed"
+            element={
+              <ProtectedRoute>
+                <FeedPage currentUser={currentUser} />
+              </ProtectedRoute>
+            }
+          />
+
           {/* 💬 Chat Route */}
           <Route
             path="/chat/:roomId"
@@ -207,7 +229,7 @@ function App() {
             }
           />
 
-          {/* 🎥 Video Call Route (NEW) */}
+          {/* 🎥 Video Call Route */}
           <Route
             path="/video-call/:roomId"
             element={
