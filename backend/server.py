@@ -54,7 +54,8 @@ app = FastAPI(
 allowed_origins = [
     "http://localhost:3000",            # Local React dev
     "http://127.0.0.1:3000",
-    "https://careerconnect.vercel.app", # Deployed frontend
+    "https://careerconnect.vercel.app",
+    "https://career2-7zue.vercel.app",# Deployed frontend
 ]
 
 app.add_middleware(
