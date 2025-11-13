@@ -1,46 +1,13 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import axios from 'axios';
-import { toast } from 'sonner';
 import { Users, Sparkles, Target, ArrowRight } from 'lucide-react';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}`;
-
-export default function HomePage({ setCurrentUser }) {
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+export default function HomePage() {
   const navigate = useNavigate();
 
-  const handleGetStarted = async () => {
-    if (!email) {
-      toast.error('Please enter your email');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // Check if user exists
-      const response = await axios.get(`${API}/users?query=${email}`);
-      
-      if (response.data && response.data.length > 0) {
-        const user = response.data[0];
-        setCurrentUser(user);
-        toast.success(`Welcome back, ${user.name}!`);
-        navigate('/dashboard');
-      } else {
-        // New user - go to onboarding
-        navigate('/onboarding', { state: { email } });
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Something went wrong. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleGetStarted = () => {
+    navigate('/login'); // Direct login navigation
   };
 
   return (
@@ -60,49 +27,44 @@ export default function HomePage({ setCurrentUser }) {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
+
+          {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full mb-6">
             <Sparkles className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-700">AI-Powered Career Guidance</span>
+            <span className="text-sm font-medium text-blue-700">
+              AI-Powered Career Guidance
+            </span>
           </div>
-          
+
+          {/* Title */}
           <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             Your Career Journey
             <span className="block mt-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Starts Here
             </span>
           </h1>
-          
+
+          {/* Subtitle */}
           <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">
-            Connect with experienced mentors, get personalized AI career guidance, and unlock opportunities tailored for Indian college students.
+            Connect with experienced mentors, get personalized AI career guidance,
+            and unlock opportunities tailored for Indian college students.
           </p>
 
-          {/* Email Input */}
+          {/* NEW: Direct Get Started Button */}
           <div className="max-w-md mx-auto mb-16">
-            <Card className="p-2 flex items-center gap-2 shadow-lg border-2 border-gray-200" data-testid="email-input-card">
-              <Input
-                data-testid="email-input"
-                type="email"
-                placeholder="Enter your email to begin"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleGetStarted()}
-                className="border-0 focus-visible:ring-0 text-base"
-              />
-              <Button
-                data-testid="get-started-btn"
-                onClick={handleGetStarted}
-                disabled={isLoading}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-6"
-              >
-                {isLoading ? 'Loading...' : 'Get Started'}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Card>
+            <Button
+              onClick={handleGetStarted}
+              className="w-full py-4 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl shadow-lg flex items-center justify-center gap-2"
+            >
+              Get Started
+              <ArrowRight className="w-5 h-5" />
+            </Button>
           </div>
 
           {/* Features */}
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <Card className="p-6 text-left hover:shadow-lg transition-shadow" data-testid="feature-ai-mentor">
+
+            <Card className="p-6 text-left hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                 <Sparkles className="w-6 h-6 text-blue-600" />
               </div>
@@ -112,7 +74,7 @@ export default function HomePage({ setCurrentUser }) {
               </p>
             </Card>
 
-            <Card className="p-6 text-left hover:shadow-lg transition-shadow" data-testid="feature-mentor-matching">
+            <Card className="p-6 text-left hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
                 <Users className="w-6 h-6 text-purple-600" />
               </div>
@@ -122,7 +84,7 @@ export default function HomePage({ setCurrentUser }) {
               </p>
             </Card>
 
-            <Card className="p-6 text-left hover:shadow-lg transition-shadow" data-testid="feature-personalized">
+            <Card className="p-6 text-left hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
                 <Target className="w-6 h-6 text-green-600" />
               </div>
@@ -131,6 +93,7 @@ export default function HomePage({ setCurrentUser }) {
                 Track your progress, view recommendations, and manage your career development journey.
               </p>
             </Card>
+
           </div>
         </div>
       </section>
@@ -154,6 +117,7 @@ export default function HomePage({ setCurrentUser }) {
           </div>
         </div>
       </section>
+
     </div>
   );
 }
