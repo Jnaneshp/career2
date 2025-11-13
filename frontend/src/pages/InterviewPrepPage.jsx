@@ -6,9 +6,18 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { 
-  Users, Code, Target, TrendingUp, Award, 
-  ChevronRight, Loader2, BookOpen, Zap, RefreshCcw
+import {
+  Users,
+  Code,
+  Target,
+  TrendingUp,
+  Award,
+  ChevronRight,
+  Loader2,
+  BookOpen,
+  Zap,
+  RefreshCcw,
+  User as UserIcon,
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -16,6 +25,16 @@ const API = `${BACKEND_URL}`;
 
 export default function InterviewPrepPage({ currentUser }) {
   const navigate = useNavigate();
+
+  // Prevent breaking if currentUser has not yet loaded
+  if (!currentUser) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   const [selectedCompany, setSelectedCompany] = useState('');
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,40 +43,48 @@ export default function InterviewPrepPage({ currentUser }) {
 
   const targetCompanies = currentUser?.target_companies || [];
 
+  // Initialize selected company
   useEffect(() => {
     if (targetCompanies.length > 0 && !selectedCompany) {
       setSelectedCompany(targetCompanies[0]);
     }
+  }, [targetCompanies]);
+
+  // Fetch progress & readiness
+  useEffect(() => {
+    if (!currentUser?.id) return;
     fetchProgress();
     fetchReadiness();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
+  // Fetch questions when company changes
   useEffect(() => {
-    if (selectedCompany) {
+    if (selectedCompany && currentUser?.id) {
       fetchQuestions(false);
     }
   }, [selectedCompany]);
 
-  // ✅ Fetch Questions (force_refresh optional)
+  // ------------------------------------------
+  // API Calls
+  // ------------------------------------------
+
   const fetchQuestions = async (forceRefresh = false) => {
     if (!selectedCompany) return;
     setLoading(true);
 
     try {
-      const response = await axios.get(`${API}/interview-prep/questions`, {
+      const res = await axios.get(`${API}/interview-prep/questions`, {
         params: {
           company: selectedCompany,
           student_id: currentUser.id,
-          force_refresh: forceRefresh
-        }
+          force_refresh: forceRefresh,
+        },
       });
 
-      setQuestions(response.data.questions);
-      if (forceRefresh) {
-        toast.success('✨ Fetched new AI-generated questions!');
-      } else if (response.data.cached) {
-        toast.info('Loaded cached questions for faster access ⚡');
-      }
+      setQuestions(res.data.questions || []);
+
+      if (forceRefresh) toast.success('✨ Fetched new AI-generated questions!');
+      else if (res.data.cached) toast.info('Loaded cached questions ⚡');
     } catch (error) {
       console.error('Error fetching questions:', error);
       toast.error('Failed to load questions');
@@ -66,15 +93,12 @@ export default function InterviewPrepPage({ currentUser }) {
     }
   };
 
-  // ✅ Refresh Questions
-  const handleRefresh = () => {
-    fetchQuestions(true);
-  };
+  const handleRefresh = () => fetchQuestions(true);
 
   const fetchProgress = async () => {
     try {
-      const response = await axios.get(`${API}/interview-prep/progress/${currentUser.id}`);
-      setProgress(response.data.profile);
+      const res = await axios.get(`${API}/interview-prep/progress/${currentUser.id}`);
+      setProgress(res.data.profile || {});
     } catch (error) {
       console.error('Error fetching progress:', error);
     }
@@ -82,76 +106,55 @@ export default function InterviewPrepPage({ currentUser }) {
 
   const fetchReadiness = async () => {
     try {
-      const response = await axios.get(`${API}/interview-prep/readiness/${currentUser.id}`);
-      setReadiness(response.data.readiness);
+      const res = await axios.get(`${API}/interview-prep/readiness/${currentUser.id}`);
+      setReadiness(res.data.readiness || []);
     } catch (error) {
       console.error('Error fetching readiness:', error);
     }
   };
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'Easy': return 'bg-green-100 text-green-800';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800';
-      case 'Hard': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  // ------------------------------------------
+  // Helpers
+  // ------------------------------------------
+
+  const getDifficultyColor = (diff) => {
+    if (diff === 'Easy') return 'bg-green-100 text-green-800';
+    if (diff === 'Medium') return 'bg-yellow-100 text-yellow-800';
+    if (diff === 'Hard') return 'bg-red-100 text-red-800';
+    return 'bg-gray-100 text-gray-800';
   };
 
-  const getReadinessColor = (percentage) => {
-    if (percentage >= 80) return 'text-green-600';
-    if (percentage >= 50) return 'text-yellow-600';
+  const getReadinessColor = (p) => {
+    if (p >= 80) return 'text-green-600';
+    if (p >= 50) return 'text-yellow-600';
     return 'text-red-600';
   };
 
-  // ✅ Empty State (if no target companies)
-  if (targetCompanies.length === 0) {
+  // ------------------------------------------
+  // Empty State — No Target Companies
+  // ------------------------------------------
+
+  if (!targetCompanies || targetCompanies.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <nav className="border-b border-gray-200 bg-white/80 backdrop-blur-md">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">CareerConnect</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => navigate('/dashboard')} data-testid="nav-dashboard">
-                Dashboard
-              </Button>
-              <Button variant="ghost" onClick={() => navigate('/ai-assistant')} data-testid="nav-ai-assistant">
-                AI Assistant
-              </Button>
-              <Button variant="ghost" onClick={() => navigate('/resume-assistant')} data-testid="nav-resume-assistant">
-                Resume Assistant
-              </Button>
-              <Button variant="ghost" onClick={() => navigate('/mentorship')} data-testid="nav-mentorship">
-                Mentorship
-              </Button>
-              <Button variant="ghost" onClick={() => navigate('/interview-prep')} data-testid="nav-interview-prep">
-                Interview Prep
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/profile')} data-testid="nav-profile">
-                <User className="w-4 h-4 mr-2" />
-                Profile
-              </Button>
-            </div>
+        <nav className="border-b bg-white/80 backdrop-blur">
+          <div className="container mx-auto flex justify-between px-4 py-4">
+            <h1 className="text-xl font-bold">CareerConnect</h1>
+            <Button variant="outline" onClick={() => navigate('/profile')}>
+              <UserIcon className="w-4 h-4 mr-2" /> Profile
+            </Button>
           </div>
         </nav>
 
         <div className="container mx-auto px-4 py-16">
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Target className="w-10 h-10 text-blue-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Set Your Target Companies First</h1>
-            <p className="text-gray-600 mb-8">
-              To get personalized interview questions, please add your target companies in your profile.
+          <div className="max-w-xl mx-auto text-center">
+            <Target className="w-14 h-14 text-blue-600 mx-auto mb-4" />
+            <h2 className="text-3xl font-bold mb-3">Set Your Target Companies</h2>
+            <p className="text-gray-600 mb-6">
+              Add target companies to generate personalized interview questions.
             </p>
-            <Button onClick={() => navigate('/profile')} size="lg">
-              Go to Profile
-              <ChevronRight className="w-4 h-4 ml-2" />
+            <Button size="lg" onClick={() => navigate('/profile')}>
+              Go to Profile <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>
@@ -159,199 +162,133 @@ export default function InterviewPrepPage({ currentUser }) {
     );
   }
 
-  // ✅ Main UI
+  // ------------------------------------------
+  // MAIN PAGE UI
+  // ------------------------------------------
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav className="border-b border-gray-200 bg-white/80 backdrop-blur-md">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">CareerConnect</span>
+
+      {/* NAVBAR */}
+      <nav className="border-b bg-white/80 backdrop-blur">
+        <div className="container mx-auto flex justify-between items-center px-4 py-4">
+          <div className="flex gap-2 items-center">
+            <Users className="w-6 h-6 text-blue-600" />
+            <span className="font-bold text-xl">CareerConnect</span>
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex gap-3">
             <Button variant="ghost" onClick={() => navigate('/dashboard')}>Dashboard</Button>
             <Button variant="ghost" onClick={() => navigate('/ai-assistant')}>AI Assistant</Button>
-            <Button variant="ghost" onClick={() => navigate('/mentorship')}>Mentorship</Button>
-            <Button variant="outline" onClick={() => navigate('/interview-prep')}>
-              <Code className="w-4 h-4 mr-2" />
-              Interview Prep
+            <Button variant="outline" onClick={() => navigate('/profile')}>
+              <UserIcon className="w-4 h-4 mr-2" /> Profile
             </Button>
           </div>
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header + Refresh */}
-          <div className="mb-8 flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Interview Preparation</h1>
-              <p className="text-gray-600">Practice coding problems tailored to your target companies</p>
-            </div>
-            <Button
-              onClick={handleRefresh}
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Refreshing...
-                </>
-              ) : (
-                <>
-                  <RefreshCcw className="w-4 h-4" />
-                  Refresh Questions
-                </>
-              )}
-            </Button>
+      {/* MAIN CONTENT */}
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+
+        {/* Header */}
+        <div className="flex justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">Interview Preparation</h1>
+            <p className="text-gray-600">AI-generated interview questions tailored to your goals</p>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Award className="w-6 h-6 text-green-600" />
-                </div>
-                <span className="text-3xl font-bold text-gray-900">
-                  {progress?.solved_questions?.length || 0}
-                </span>
-              </div>
-              <h3 className="font-semibold text-gray-900">Questions Solved</h3>
-              <p className="text-sm text-gray-600">Keep going!</p>
-            </Card>
+          <Button onClick={handleRefresh} disabled={loading} className="flex items-center gap-2 bg-blue-600 text-white">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
+            Refresh
+          </Button>
+        </div>
 
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-blue-600" />
-                </div>
-                <span className="text-3xl font-bold text-gray-900">
-                  {Math.round(progress?.readiness_score || 0)}%
-                </span>
-              </div>
-              <h3 className="font-semibold text-gray-900">Overall Readiness</h3>
-              <p className="text-sm text-gray-600">Target: 80%+</p>
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-purple-600" />
-                </div>
-                <span className="text-3xl font-bold text-gray-900">
-                  {progress?.strong_topics?.length || 0}
-                </span>
-              </div>
-              <h3 className="font-semibold text-gray-900">Strong Topics</h3>
-              <p className="text-sm text-gray-600">
-                {progress?.strong_topics?.[0] || 'Start solving!'}
-              </p>
-            </Card>
-          </div>
-
-          {/* Company Readiness */}
-          {readiness.length > 0 && (
-            <Card className="p-6 mb-8">
-              <h2 className="text-xl font-semibold mb-4">Company Readiness</h2>
-              <div className="space-y-4">
-                {readiness.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-gray-900">{item.company}</span>
-                        <span className={`font-bold ${getReadinessColor(item.readiness_percentage)}`}>
-                          {item.readiness_percentage}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all ${
-                            item.readiness_percentage >= 80 ? 'bg-green-600' :
-                            item.readiness_percentage >= 50 ? 'bg-yellow-600' : 'bg-red-600'
-                          }`}
-                          style={{ width: `${item.readiness_percentage}%` }}
-                        />
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {item.questions_solved} / {item.questions_needed} questions solved
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* Company Selector */}
-          <Card className="p-6 mb-6">
-            <Label className="text-lg font-semibold mb-3 block">Select Target Company</Label>
-            <div className="flex flex-wrap gap-3">
-              {targetCompanies.map((company) => (
-                <Button
-                  key={company}
-                  variant={selectedCompany === company ? 'default' : 'outline'}
-                  onClick={() => setSelectedCompany(company)}
-                  className={selectedCompany === company ? 'bg-blue-600' : ''}
-                >
-                  {company}
-                </Button>
-              ))}
+        {/* Stats */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <Card className="p-6">
+            <div className="flex justify-between mb-4">
+              <Award className="text-green-600 w-8 h-8" />
+              <span className="text-3xl font-bold">{progress?.solved_questions?.length || 0}</span>
             </div>
+            <p className="font-semibold">Questions Solved</p>
           </Card>
 
-          {/* Questions List */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              Questions for {selectedCompany}
-            </h2>
+          <Card className="p-6">
+            <div className="flex justify-between mb-4">
+              <TrendingUp className="text-blue-600 w-8 h-8" />
+              <span className="text-3xl font-bold">{Math.round(progress?.readiness_score || 0)}%</span>
+            </div>
+            <p className="font-semibold">Overall Readiness</p>
+          </Card>
 
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {questions.map((question, index) => (
-                  <Card
-                    key={question.id}
-                    className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => navigate(`/interview-prep/question/${question.id}`)}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="text-gray-500 font-mono">#{index + 1}</span>
-                          <h3 className="text-lg font-semibold text-gray-900">{question.title}</h3>
-                        </div>
-                        <p className="text-gray-600 text-sm mb-3">
-                          {question.description.slice(0, 150)}...
-                        </p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0 ml-4" />
-                    </div>
-
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <Badge className={getDifficultyColor(question.difficulty)}>
-                        {question.difficulty}
-                      </Badge>
-                      <Badge variant="outline">{question.category}</Badge>
-                      {question.frequency && (
-                        <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-                          🔥 {question.frequency} Frequency
-                        </Badge>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+          <Card className="p-6">
+            <div className="flex justify-between mb-4">
+              <Zap className="text-purple-600 w-8 h-8" />
+              <span className="text-3xl font-bold">{progress?.strong_topics?.length || 0}</span>
+            </div>
+            <p className="font-semibold">Strong Topics</p>
+          </Card>
         </div>
+
+        {/* Company Selector */}
+        <Card className="p-6 mb-6">
+          <Label className="text-lg font-semibold mb-3 block">Select Target Company</Label>
+          <div className="flex gap-2 flex-wrap">
+            {targetCompanies.map((company) => (
+              <Button
+                key={company}
+                variant={selectedCompany === company ? 'default' : 'outline'}
+                onClick={() => setSelectedCompany(company)}
+                className={selectedCompany === company ? 'bg-blue-600 text-white' : ''}
+              >
+                {company}
+              </Button>
+            ))}
+          </div>
+        </Card>
+
+        {/* Questions */}
+        <h2 className="text-2xl font-bold mb-4">
+          Questions for {selectedCompany}
+        </h2>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {questions.map((q, index) => (
+              <Card
+                key={q.id}
+                className="p-6 hover:shadow-lg transition cursor-pointer"
+                onClick={() => navigate(`/interview-prep/question/${q.id}`)}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-gray-500">#{index + 1}</span>
+                      <h3 className="font-semibold text-lg">{q.title}</h3>
+                    </div>
+                    <p className="text-gray-600 text-sm">{q.description.slice(0, 160)}...</p>
+                  </div>
+                  <ChevronRight className="text-gray-400 w-5 h-5" />
+                </div>
+
+                <div className="mt-3 flex gap-2 flex-wrap">
+                  <Badge className={getDifficultyColor(q.difficulty)}>{q.difficulty}</Badge>
+                  <Badge variant="outline">{q.category}</Badge>
+                  {q.frequency && (
+                    <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                      🔥 {q.frequency} Frequency
+                    </Badge>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
       </div>
     </div>
   );

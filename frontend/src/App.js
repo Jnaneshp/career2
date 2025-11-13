@@ -1,6 +1,13 @@
+// src/App.js
 import { useState, useEffect } from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import axios from "axios";
 import { auth } from "@/firebaseConfig";
@@ -25,6 +32,36 @@ import FeedPage from "@/pages/FeedPage"; // 📰 NEW Feed page
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}`;
 
+// ✅ Protected Route wrapper that avoids onboarding redirect loops
+function ProtectedRoute({ children, currentUser, loading }) {
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
+  const storedUser = localStorage.getItem("currentUser");
+  const finalUser = currentUser || (storedUser ? JSON.parse(storedUser) : null);
+
+  if (!finalUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // ✅ Avoid infinite redirect when user already on onboarding page
+  if (
+    finalUser.onboarding_required &&
+    location.pathname !== "/onboarding"
+  ) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  return children;
+}
+
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +73,6 @@ function App() {
         if (user) {
           console.log("✅ Firebase user detected:", user.email);
 
-          // Check if user exists in backend
           const res = await axios.get(`${API}/users`, {
             params: { query: user.email },
           });
@@ -69,8 +105,8 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // ✅ Protected Route Component (with localStorage fallback)
-  const ProtectedRoute = ({ children }) => {
+  // ✅ Public Route (redirect if already authenticated)
+  const PublicRoute = ({ children }) => {
     if (loading) {
       return (
         <div className="min-h-screen flex items-center justify-center">
@@ -82,20 +118,13 @@ function App() {
     const storedUser = localStorage.getItem("currentUser");
     const finalUser = currentUser || (storedUser ? JSON.parse(storedUser) : null);
 
-    if (!finalUser) return <Navigate to="/login" replace />;
-    if (finalUser.onboarding_required) return <Navigate to="/onboarding" replace />;
-    return children;
-  };
-
-  // ✅ Public Route (redirect if already authenticated)
-  const PublicRoute = ({ children }) => {
-    if (currentUser && !currentUser.onboarding_required) {
+    if (finalUser && !finalUser.onboarding_required) {
       return <Navigate to="/dashboard" replace />;
     }
     return children;
   };
 
-  // ✅ Loading Screen
+  // ✅ Global Loading Screen
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
@@ -129,12 +158,15 @@ function App() {
               </PublicRoute>
             }
           />
+
+          {/* 🧭 Onboarding Route (not wrapped in ProtectedRoute to avoid loop) */}
           <Route
             path="/onboarding"
             element={
-              <ProtectedRoute>
-                <OnboardingPage setCurrentUser={setCurrentUser} />
-              </ProtectedRoute>
+              <OnboardingPage
+                currentUser={currentUser}
+                setCurrentUser={setCurrentUser}
+              />
             }
           />
 
@@ -142,7 +174,7 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute currentUser={currentUser} loading={loading}>
                 <DashboardPage currentUser={currentUser} />
               </ProtectedRoute>
             }
@@ -150,7 +182,7 @@ function App() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute currentUser={currentUser} loading={loading}>
                 <ProfilePage
                   currentUser={currentUser}
                   setCurrentUser={setCurrentUser}
@@ -161,7 +193,7 @@ function App() {
           <Route
             path="/ai-assistant"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute currentUser={currentUser} loading={loading}>
                 <AIAssistantPage currentUser={currentUser} />
               </ProtectedRoute>
             }
@@ -169,7 +201,7 @@ function App() {
           <Route
             path="/resume-assistant"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute currentUser={currentUser} loading={loading}>
                 <ResumeAssistantPage currentUser={currentUser} />
               </ProtectedRoute>
             }
@@ -177,7 +209,7 @@ function App() {
           <Route
             path="/mentorship"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute currentUser={currentUser} loading={loading}>
                 <MentorshipPage currentUser={currentUser} />
               </ProtectedRoute>
             }
@@ -185,7 +217,7 @@ function App() {
           <Route
             path="/interview-prep"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute currentUser={currentUser} loading={loading}>
                 <InterviewPrepPage currentUser={currentUser} />
               </ProtectedRoute>
             }
@@ -193,47 +225,39 @@ function App() {
           <Route
             path="/interview-prep/question/:questionId"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute currentUser={currentUser} loading={loading}>
                 <CodeEditorPage currentUser={currentUser} />
               </ProtectedRoute>
             }
           />
-
-          {/* 💼 Jobs Route */}
           <Route
             path="/jobs"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute currentUser={currentUser} loading={loading}>
                 <JobsPage currentUser={currentUser} />
               </ProtectedRoute>
             }
           />
-
-          {/* 📰 Feed Route (NEW) */}
           <Route
             path="/feed"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute currentUser={currentUser} loading={loading}>
                 <FeedPage currentUser={currentUser} />
               </ProtectedRoute>
             }
           />
-
-          {/* 💬 Chat Route */}
           <Route
             path="/chat/:roomId"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute currentUser={currentUser} loading={loading}>
                 <ChatPage currentUser={currentUser} />
               </ProtectedRoute>
             }
           />
-
-          {/* 🎥 Video Call Route */}
           <Route
             path="/video-call/:roomId"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute currentUser={currentUser} loading={loading}>
                 <VideoCallPage currentUser={currentUser} />
               </ProtectedRoute>
             }
