@@ -34,22 +34,37 @@ const webpackConfig = {
     alias: {
       '@': path.resolve(__dirname, 'src'),
     },
+
     configure: (webpackConfig) => {
+
+      // 🔥🔥🔥 DISABLE ESLINT DURING PRODUCTION BUILD (Fix Vercel Build)
+      if (webpackConfig.module?.rules) {
+        webpackConfig.module.rules = webpackConfig.module.rules.filter(
+          (rule) =>
+            !(
+              rule.use &&
+              rule.use.some &&
+              rule.use.some(
+                (u) =>
+                  typeof u === "object" &&
+                  u.loader &&
+                  u.loader.includes("eslint-loader")
+              )
+            )
+        );
+      }
 
       // Disable hot reload completely if environment variable is set
       if (config.disableHotReload) {
-        // Remove hot reload related plugins
-        webpackConfig.plugins = webpackConfig.plugins.filter(plugin => {
-          return !(plugin.constructor.name === 'HotModuleReplacementPlugin');
-        });
+        webpackConfig.plugins = webpackConfig.plugins.filter(
+          (plugin) => plugin.constructor.name !== "HotModuleReplacementPlugin"
+        );
 
-        // Disable watch mode
         webpackConfig.watch = false;
         webpackConfig.watchOptions = {
           ignored: /.*/, // Ignore all files
         };
       } else {
-        // Add ignored patterns to reduce watched directories
         webpackConfig.watchOptions = {
           ...webpackConfig.watchOptions,
           ignored: [
@@ -83,22 +98,19 @@ if (config.enableVisualEdits) {
 // Setup dev server with visual edits and/or health check
 if (config.enableVisualEdits || config.enableHealthCheck) {
   webpackConfig.devServer = (devServerConfig) => {
-    // Apply visual edits dev server setup if enabled
+
     if (config.enableVisualEdits && setupDevServer) {
       devServerConfig = setupDevServer(devServerConfig);
     }
 
-    // Add health check endpoints if enabled
     if (config.enableHealthCheck && setupHealthEndpoints && healthPluginInstance) {
       const originalSetupMiddlewares = devServerConfig.setupMiddlewares;
 
       devServerConfig.setupMiddlewares = (middlewares, devServer) => {
-        // Call original setup if exists
         if (originalSetupMiddlewares) {
           middlewares = originalSetupMiddlewares(middlewares, devServer);
         }
 
-        // Setup health endpoints
         setupHealthEndpoints(devServer, healthPluginInstance);
 
         return middlewares;
