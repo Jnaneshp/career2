@@ -15,6 +15,8 @@ import { signOut } from "firebase/auth";        // ✅ Added
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}`;
 
+
+
 export default function DashboardPage({ currentUser }) {
   const navigate = useNavigate();
   const [mentorMatches, setMentorMatches] = useState([]);
@@ -86,46 +88,101 @@ export default function DashboardPage({ currentUser }) {
 
   const hasTargetCompanies = currentUser?.target_companies?.length > 0;
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
 
       {/* ================= NAV BAR ================= */}
-      <nav className="border-b border-gray-200 bg-white/80 backdrop-blur-md">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+<nav className="border-b border-gray-200 bg-white/80 backdrop-blur-md">
+  <div className="container mx-auto px-4 py-4">
 
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">CareerConnect</span>
-            </div>
+    {/* TOP BAR */}
+    <div className="flex items-center justify-between">
 
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => navigate('/dashboard')}>Dashboard</Button>
-              <Button variant="ghost" onClick={() => navigate('/ai-assistant')}>AI Assistant</Button>
-              <Button variant="ghost" onClick={() => navigate('/resume-assistant')}>Resume Assistant</Button>
-              <Button variant="ghost" onClick={() => navigate('/mentorship')}>Mentorship</Button>
-              <Button variant="ghost" onClick={() => navigate('/interview-prep')}>Interview Prep</Button>
-              <Button variant="ghost" onClick={() => navigate('/feed')}>Feed</Button>
-              <Button variant="ghost" onClick={() => navigate('/jobs')}>Job Portal</Button>
-              <Button variant="outline" onClick={() => navigate('/profile')}>
-                <User className="w-4 h-4 mr-2" /> Profile
-              </Button>
-
-              {/* LOGOUT BUTTON */}
-              <Button 
-                variant="ghost" 
-                onClick={handleLogout}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <LogOut className="w-4 h-4 mr-2" /> Logout
-              </Button>
-            </div>
-
-          </div>
+      {/* LOGO */}
+      <div
+        className="flex items-center gap-2 cursor-pointer"
+        onClick={() => navigate('/dashboard')}
+      >
+        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+          <Users className="w-6 h-6 text-white" />
         </div>
-      </nav>
+        <span className="text-xl font-bold text-gray-900">CareerConnect</span>
+      </div>
+
+      {/* DESKTOP MENU */}
+      <div className="hidden md:flex items-center gap-4">
+        <Button variant="ghost" onClick={() => navigate('/dashboard')}>Dashboard</Button>
+        <Button variant="ghost" onClick={() => navigate('/ai-assistant')}>AI Assistant</Button>
+        <Button variant="ghost" onClick={() => navigate('/resume-assistant')}>Resume Assistant</Button>
+        <Button variant="ghost" onClick={() => navigate('/mentorship')}>Mentorship</Button>
+        <Button variant="ghost" onClick={() => navigate('/interview-prep')}>Interview Prep</Button>
+        <Button variant="ghost" onClick={() => navigate('/feed')}>Feed</Button>
+        <Button variant="ghost" onClick={() => navigate('/jobs')}>Job Portal</Button>
+
+        <Button variant="outline" onClick={() => navigate('/profile')}>
+          <User className="w-4 h-4 mr-2" /> Profile
+        </Button>
+
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
+          <LogOut className="w-4 h-4 mr-2" /> Logout
+        </Button>
+      </div>
+
+      {/* MOBILE MENU BUTTON */}
+      <button
+        className="md:hidden p-2 rounded-lg border border-gray-300"
+        onClick={() => setMenuOpen((prev) => !prev)}
+      >
+        <svg
+          className="w-6 h-6 text-gray-700"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round"
+            d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+          />
+        </svg>
+      </button>
+
+    </div>
+
+    {/* MOBILE DROPDOWN MENU */}
+    {menuOpen && (
+      <div className="md:hidden mt-4 space-y-2 pb-3 animate-fadeIn">
+        <Button className="w-full" variant="ghost" onClick={() => navigate('/dashboard')}>Dashboard</Button>
+        <Button className="w-full" variant="ghost" onClick={() => navigate('/ai-assistant')}>AI Assistant</Button>
+        <Button className="w-full" variant="ghost" onClick={() => navigate('/resume-assistant')}>Resume Assistant</Button>
+        <Button className="w-full" variant="ghost" onClick={() => navigate('/mentorship')}>Mentorship</Button>
+        <Button className="w-full" variant="ghost" onClick={() => navigate('/interview-prep')}>Interview Prep</Button>
+        <Button className="w-full" variant="ghost" onClick={() => navigate('/feed')}>Feed</Button>
+        <Button className="w-full" variant="ghost" onClick={() => navigate('/jobs')}>Job Portal</Button>
+
+        <Button className="w-full" variant="outline" onClick={() => navigate('/profile')}>
+          <User className="w-4 h-4 mr-2" /> Profile
+        </Button>
+
+        <Button
+          className="w-full text-red-600 hover:bg-red-50"
+          variant="ghost"
+          onClick={handleLogout}
+        >
+          <LogOut className="w-4 h-4 mr-2" /> Logout
+        </Button>
+      </div>
+    )}
+
+  </div>
+</nav>
+
 
       {/* ================= MAIN CONTENT ================= */}
       <div className="container mx-auto px-4 py-8">
