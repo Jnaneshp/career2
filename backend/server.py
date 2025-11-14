@@ -56,6 +56,7 @@ allowed_origins = [
     "http://127.0.0.1:3000",
     "https://careerconnect.vercel.app",
     "https://career2-7zue.vercel.app",# Deployed frontend
+    "https://career2-7zue-eaxg6t8ir-jnaneshps-projects.vercel.app",
 ]
 
 app.add_middleware(

@@ -30,7 +30,9 @@ async def websocket_chat(websocket: WebSocket, room_id: str, user_id: str):
         "https://careerconnect.vercel.app",
         "https://carrerconnect-atj8.onrender.com",
       "https://career2-7zue.vercel.app",   # ADD THIS
-    "https://*.vercel.app" , 
+    "https://*.vercel.app" ,
+    "https://career2-7zue-eaxg6t8ir-jnaneshps-projects.vercel.app", 
+    
     ]
 
     if origin not in allowed_origins:
